@@ -1,0 +1,31 @@
+div(class='d-flex p text-center justify-content-center align-items-center border-bottom py-5')
+  ul(class='nav flex-column')
+    a(class='nav-link' href='/')
+      h3(class='text-uppercase text-center') Chessmake
+    if user
+      h6 Welcome !{user}
+div(class='d-flex text-center justify-content-center align-items-center border-bottom py-3')
+  ul(class='nav flex-column')
+    if user
+      li(class='nav-item')
+        a(class='nav-link' href='/logout') Logout
+    else 
+      li(class='nav-item')
+        a(class='nav-link' href='/login') Login
+      li(class='nav-item')
+        a(class='nav-link' href='/register') Register
+div(class='d-flex text-center justify-content-center border-bottom py-3')
+  ul(class='nav flex-column')
+    if user
+      li(class='nav-item')
+        a(class='nav-link' href='/mylobbies') My Lobbies
+      li(class='nav-item')
+        a(class='nav-link' href='/create_lobby') Create Lobby
+    li(class='nav-item')
+      a(class='nav-link' href='/lobby') Game Lobbies
+    li(class='nav-item')
+      a(class='nav-link' href='/about') About
+div(class='d-flex text-center justify-content-center align-items-center')
+  small(class='p-4')
+    h6 Site information
+    p(class="text-muted") CSC 667, Group 3. <br> This is a test page not meant for any practical use.

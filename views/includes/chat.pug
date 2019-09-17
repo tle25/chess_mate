@@ -1,0 +1,79 @@
+h3(class='text-center pt-4 pb-2') Chat Room
+
+//- div(class='list group h-75' id="world_chat")
+div(class='list group h-75 overflow-auto' id="world_chat")
+    li(class='list-group-item h-100 y-100 pt-5 text-center')
+        div(class='spinner-border text-primary' role='status')
+div(class='input-group border-top pt-2' )
+    if user
+        input(type='text' class='form-control' placeholder='Message chat' id="message")
+    else
+        input(type='text' class='form-control' placeholder='Message chat' id="message" readonly)
+    div(class='input-group-append')
+        if user
+            button(class='btn btn-outline-primary' onClick='ButtonIsClicked()') Send
+        else
+            a(href='../login')
+                button(class='btn btn-outline-primary') Send
+
+script.
+    var num_messages = 0
+
+    function update_message(length){
+        num_messages = length
+    } 
+
+    setInterval(function() {
+        console.log(num_messages)
+        $.ajax({method: 'GET',
+        url: 'message', 
+        data: {},
+        dataType: "json", 
+            success: function(rows){
+            var length = rows.length
+                if(num_messages < length) { 
+                    update_message(length)
+                    messages(rows)
+                } 
+            }   
+
+        });
+    }, 5000)
+
+    function ButtonIsClicked(){
+        var chat_message = $("#message").val()
+        $("#message").val("")
+        $("#world_chat").html(null) 
+        //- Check if message is empty or only space, then do nothing
+        if(chat_message.trim().length != 0){           
+            $.ajax({method:'POST',
+                url: 'message', 
+                data: {message: chat_message}, 
+                success: function(fields){
+                    //- console.log(fields);
+                    $.ajax({method: 'GET',
+                        url: 'message', 
+                        data: {},
+                        dataType: "json", 
+                        success: function(rows){
+                            messages(rows)
+                        }, 
+                        error: function(err){alert("error when loading the data");}
+                        });
+                }
+
+            });
+        }
+
+    }
+
+    function messages(rows){
+        $("#world_chat").html(null) 
+        for (i=rows.length - 1, j=0; i >= 0, j < 20; i--, j++){
+            var messages_router =  $("#world_chat").html();
+            var row = rows[i];
+            $("#world_chat").html( 
+                 messages_router + "<li class='list-group-item mb-1 mx-1'> <div class='d-flex w-100 justify-content-start'> <h6 class='mb-1 mr-2'>" + row.uid + "</h6><small class='text-muted text-light'>" + '(' + row.timestamp + ')' + '</small></div>' + row.message + '</li>'
+            );
+        }
+    }  

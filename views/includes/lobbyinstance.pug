@@ -1,0 +1,31 @@
+if lobbies
+  each lobby in lobbies
+    div(class='card bg-light mb-3' style="w-100")
+      div(class='card-body py-3')
+        div(class='row align-items-center')
+          div(class='col-2 border-right')
+            div(class='d-flex justify-content-around')
+              h5 !{lobby.gid}
+          div(class='col-7')
+            div(class='d-flex justify-content-start')
+              if lobby.title
+                h5 !{lobby.title}
+              else
+                h5 Player !{lobby.uid_1}'s Game
+          div(class='col-3 align-items-center')
+            div(class='d-flex justify-content-around align-items-center')
+              form(class='inline my-0' action='/game/connect' method='post')
+                input(type='hidden' name='game_id' value=lobby.gid)
+                if uid !== lobby.uid_2 && uid !== lobby.uid_1 && lobby.uid_2
+                  button(type='submit' class="btn btn-secondary" disabled) Join
+                else
+                  button(type='submit' class="btn btn-primary") Join
+              form(class='inline my-0' action='/game/view/connect' method='post')
+                input(type='hidden' name='game_id' value=lobby.gid)
+                button(type='submit' class="btn btn-outline-secondary") View
+      if lobby.uid_1 === uid
+        div(class='card-footer text-muted small text-right py-1') Created by you (!{lobby.creation_time}).
+      else
+        div(class='card-footer text-muted small text-right py-1') Created by Player !{lobby.uid_1} (!{lobby.creation_time}).
+else
+  p(class='text-muted text-center') There are no active lobbies.

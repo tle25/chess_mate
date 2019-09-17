@@ -1,0 +1,212 @@
+div(class="container shadow bg-dark d-flex flex-column justify-content-center align-items-center p-3 mb-2 w-100")
+  div(class="w3-row")
+    div(class="w3-col") 
+    div(class="w3-col 3-container" id="board" style="width: 500px")
+    div(class="w3-col") 
+  div(class='alert alert-primary w-75 m-0 pb-0 text-center align-items-center small')
+    p
+      | Status: 
+      span#status
+
+div(class='card bg-light w-100')
+  div(class='card-header text-center py-1') !{lobbyTitle}
+  div(class='card-body py-3')
+    div(class='row')
+      div(class='col-5')
+        div(class='d-flex justify-content-around')
+          h5(id="player1_turn") !{username1}
+          if color === 'w'
+            p White
+          else
+            p Black
+      div(class='col-2 border-right border-left')
+        div(class='d-flex justify-content-around')
+          h5 vs.
+      div(class='col-5')
+        div(class='d-flex justify-content-around')
+          h5(id="player2_turn") !{username2}
+          if color === 'w'
+            p Black
+          else
+            p White
+
+
+script.
+      const userColor = '!{color}';
+      let draggable; // for game viewing
+      var state = "!{state}";
+      var board, waiting,
+      game = new Chess(),
+      statusEl = $('#status'),
+      fenEl = $('#fen'),
+      pgnEl = $('#pgn');
+
+      // for game viewing
+      if (userColor === 'neither') {
+        draggable = false;
+      } else {
+        draggable = true;
+      }
+
+      var removeGreySquares = function() {
+        $('#board .square-55d63').css('background', '');
+      };
+      var greySquare = function(square) {
+        var squareEl = $('#board .square-' + square);
+        var background = '#a9a9a9';
+        if (squareEl.hasClass('black-3c85d') === true) {
+          background = '#696969';
+         }
+        squareEl.css('background', background);
+      };
+
+      var onDragStart = function(source, piece) {
+      // do not pick up pieces if the game is over
+      // or if it's not that side's turn
+      // or if it's not the user's color
+        if (game.game_over() === true ||
+          (game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+          (game.turn() === 'b' && piece.search(/^w/) !== -1) ||
+          (userColor === 'w' && piece.search(/^b/) !== -1) || 
+          (userColor === 'b' && piece.search(/^w/) !== -1)) {
+        return false;
+        }
+      };
+
+      var onDrop = function(source, target) {
+         removeGreySquares();
+        // see if the move is legal
+        var move = game.move({
+          from: source,
+          to: target,
+          promotion: 'q' // NOTE: always promote to a queen for example simplicity
+        });
+      
+      
+        // illegal move
+        if (move === null) return 'snapback';
+        
+        updateStatus();
+        updateState();
+        waiting = true;
+      };
+
+
+      var onMouseoverSquare = function(square, piece) {
+        // get list of possible moves for this square
+        var moves = game.moves({
+          square: square,
+          verbose: true
+        });
+      
+        // exit if there are no moves available for this square
+        if (moves.length === 0) return;
+        // highlight the square they moused over
+        greySquare(square);
+        // highlight the possible squares for this piece
+        for (var i = 0; i < moves.length; i++) {
+        greySquare(moves[i].to);
+        }
+      };
+      
+      var onMouseoutSquare = function(square, piece) {
+        removeGreySquares();
+      };
+      
+      var onSnapEnd = function() {
+        //- board.position('rnbqkbnr/p1pppppp/8/1p6/P2P4/8/1PP1PPPP/RNBQKBNR b KQkq d3 0 2')
+        board.position(game.fen())
+
+        //- $.ajax({method:'GET', url: 'game/state')}
+
+      };
+
+      var updateState = function() {
+        console.log("Sending POST with state:\n" + game.fen());
+        let timestamp = new Date().toLocaleString();
+        $.ajax({
+          method:'POST',
+          url: 'state', 
+          data: {status: game.fen(), gameId: !{gameId}, uid: !{uid}, time: timestamp}, 
+          success: function(result){
+            console.log("updateState is a success.");
+          },
+          error: function(result){
+            console.log("updateState is a failure.");
+          }
+        });
+      };
+      
+      var updateStatus = function() {
+        var status = '';
+      
+        var moveColor = 'White';
+        if (game.turn() === 'b') {
+          moveColor = 'Black';
+        }
+        // checkmate?
+        if (game.in_checkmate() === true) {
+          status = 'Game over, ' + moveColor + ' is in checkmate.';
+        }
+
+        // draw?
+        else if (game.in_draw() === true) {
+          status = 'Game over, drawn position';
+        }
+
+        // game still on
+        else {
+          status = moveColor + ' to move';
+          // check?
+          if (game.in_check() === true) {
+            status += ', ' + moveColor + ' is in check';
+          }
+        } // end else
+
+        statusEl.html(status);
+        fenEl.html(game.fen());
+        pgnEl.html(game.pgn());
+      };
+      
+      var cfg = {
+        draggable: draggable,
+        position: state,
+        onDragStart: onDragStart,
+        onDrop: onDrop,
+        onMouseoutSquare: onMouseoutSquare,
+        onMouseoverSquare: onMouseoverSquare,
+        onSnapEnd: onSnapEnd
+      };
+      
+      board = ChessBoard('board', cfg);
+      game.load(state);
+      updateStatus();
+
+      // Set flag to wait for state changes
+      if (game.turn() === userColor) {
+        waiting = false;
+      } else {
+        waiting = true;
+      }
+
+      // Check for state changes if waiting for other player
+      const interval = setInterval(function() {
+          gameID = '!{gameId}';
+          $.ajax({
+            method:'GET',
+            url: 'state/' + gameID,
+            success: function(data) {
+              let oldState = game.fen();
+              state = data;
+              console.log("Waiting for state!");
+              if (oldState !== state) {  
+                board.position(state);
+                game.load(state);
+                updateStatus();
+                waiting = false;
+              }
+            }
+          });
+        }, 2000);
+      
+      

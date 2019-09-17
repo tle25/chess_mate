@@ -1,0 +1,22 @@
+div(class='d-flex h-100 justify-content-center align-items-center')
+  if gameCreated
+
+    div(class='d-flex h-100 justify-content-center align-items-center')
+      div(class='alert alert-secondary w-75')
+        h4(class='alert-heading justify-content-center') New game succesfully created!
+        p Your room has been sucesfully created and can now be viewed in the public list of lobbies. This room along with all your other rooms can be easily viewed and managed in your personal list of lobbies.
+        p Good luck and have fun.
+        hr
+        nav(class='nav flex-column align-items-center')
+          a(class="btn btn-primary mb-2 w-50" href="/lobby") My Lobbies
+          a(class="btn btn-primary mb-2 w-50" href="/game") Connect to Game
+          a(class="btn btn-secondary mb-2 w-50" href="/lobby") Public Lobbies
+  else
+    div(class='column w-50 shadow text-center p-4')
+      h4(class='my-4') Create Lobby
+      form(class='text-left' action='/game/create' method='post')
+        div(class='form-group')
+          label Lobby Title 
+          input(type='text' class='form-control' name="lobbyTitle" minlength="5" maxlength="30" placeholder="Lobby Name" autofocus)
+        button(type='submit' class='btn btn-primary w-100 mt-4') Create
+
